@@ -1,0 +1,17 @@
+
+services:
+  db:
+    image: postgres:16
+    container_name: clientflow_db
+    restart: always
+    environment:
+      POSTGRES_USER: clientflow
+      POSTGRES_PASSWORD: clientflow_dev
+      POSTGRES_DB: clientflow_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
