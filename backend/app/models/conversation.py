@@ -25,7 +25,10 @@ class Conversation(Base):
         server_default=func.now()
     )
 
-    customer = relationship("Customer", back_populates="conversations")
+    customer = relationship(
+        "Customer",
+        back_populates="conversations"
+    )
 
     messages = relationship(
         "Message",

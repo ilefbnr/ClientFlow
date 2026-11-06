@@ -25,4 +25,7 @@ class Message(Base):
         server_default=func.now()
     )
 
-    conversation = relationship("Conversation", back_populates="messages")
+    conversation = relationship(
+        "Conversation",
+        back_populates="messages"
+    )

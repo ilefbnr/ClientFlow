@@ -404,3 +404,38 @@ h1 {
     flex-direction: column;
   }
 }
+
+
+.customer-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.edit-button,
+.delete-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background: transparent;
+}
+
+.edit-button {
+  color: #2563eb;
+}
+
+.edit-button:hover {
+  background: #eff6ff;
+}
+
+.delete-button {
+  color: #dc2626;
+}
+
+.delete-button:hover {
+  background: #fef2f2;
+}

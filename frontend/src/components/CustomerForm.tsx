@@ -1,17 +1,24 @@
 
 import { useState } from "react";
 import type { FormEvent } from "react";
+import type { Customer } from "../types";
 import type { CustomerCreate } from "../api/customers";
+import axios from "axios";
 
 interface CustomerFormProps {
+  initialData?: Customer;
   onSubmit: (data: CustomerCreate) => Promise<void>;
   onCancel: () => void;
 }
 
-function CustomerForm({ onSubmit, onCancel }: CustomerFormProps) {
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
+function CustomerForm({
+  initialData,
+  onSubmit,
+  onCancel,
+}: CustomerFormProps) {
+  const [fullName, setFullName] = useState(initialData?.full_name ?? "");
+  const [email, setEmail] = useState(initialData?.email ?? "");
+  const [phone, setPhone] = useState(initialData?.phone ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,15 +34,17 @@ function CustomerForm({ onSubmit, onCancel }: CustomerFormProps) {
         email: email.trim(),
         phone: phone.trim() || null,
       });
-    } catch (err: any) {
-      const status = err.response?.status;
+    } catch (err: unknown) {
+        const status = axios.isAxiosError(err)
+          ? err.response?.status
+          : undefined;
 
       if (status === 409) {
         setError("This email address is already registered.");
       } else if (status === 422) {
         setError("Please check the information you entered.");
       } else {
-        setError("Unable to create customer. Please try again.");
+        setError("Unable to save customer. Please try again.");
       }
     } finally {
       setLoading(false);
@@ -51,7 +60,6 @@ function CustomerForm({ onSubmit, onCancel }: CustomerFormProps) {
           type="text"
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
-          placeholder="Enter customer name"
           required
         />
       </div>
@@ -63,7 +71,6 @@ function CustomerForm({ onSubmit, onCancel }: CustomerFormProps) {
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="customer@example.com"
           required
         />
       </div>
@@ -75,7 +82,6 @@ function CustomerForm({ onSubmit, onCancel }: CustomerFormProps) {
           type="tel"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
-          placeholder="+216 XX XXX XXX"
         />
       </div>
 
@@ -87,7 +93,11 @@ function CustomerForm({ onSubmit, onCancel }: CustomerFormProps) {
         </button>
 
         <button type="submit" disabled={loading}>
-          {loading ? "Creating..." : "Create Customer"}
+          {loading
+            ? "Saving..."
+            : initialData
+              ? "Update Customer"
+              : "Create Customer"}
         </button>
       </div>
     </form>

@@ -1,8 +1,21 @@
 
 import { useEffect, useState } from "react";
-import { RefreshCw, Users, Plus, X } from "lucide-react";
+import {
+  RefreshCw,
+  Users,
+  Plus,
+  X,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 
-import { getCustomers, createCustomer } from "../api/customers";
+import {
+  getCustomers,
+  createCustomer,
+  updateCustomer,
+  deleteCustomer,
+} from "../api/customers";
+
 import type { CustomerCreate } from "../api/customers";
 import type { Customer } from "../types";
 import CustomerForm from "../components/CustomerForm";
@@ -11,7 +24,10 @@ function CustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
   const [showForm, setShowForm] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] =
+    useState<Customer | null>(null);
 
   // Retrieve customers
   const fetchCustomers = async () => {
@@ -32,15 +48,62 @@ function CustomersPage() {
   // Create a customer
   const handleCreateCustomer = async (data: CustomerCreate) => {
     await createCustomer(data);
-
-    // Refresh the customer list
     await fetchCustomers();
-
     setShowForm(false);
   };
 
+  // Update a customer
+  const handleUpdateCustomer = async (data: CustomerCreate) => {
+    if (!selectedCustomer) return;
+
+    await updateCustomer(selectedCustomer.id, data);
+    await fetchCustomers();
+
+    setSelectedCustomer(null);
+  };
+
+  // Delete a customer
+  const handleDeleteCustomer = async (customer: Customer) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete ${customer.full_name}?`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await deleteCustomer(customer.id);
+      await fetchCustomers();
+    } catch (err) {
+      console.error("Delete customer error:", err);
+      setError("Unable to delete customer.");
+    }
+  };
+
   useEffect(() => {
-    fetchCustomers();
+  let isMounted = true;
+
+  getCustomers()
+    .then((data) => {
+      if (isMounted) {
+        setCustomers(data);
+      }
+    })
+    .catch((err) => {
+      console.error("Customers error:", err);
+
+      if (isMounted) {
+        setError("Unable to retrieve customers.");
+      }
+    })
+    .finally(() => {
+      if (isMounted) {
+        setLoading(false);
+      }
+    });
+
+  return () => {
+    isMounted = false;
+  };
   }, []);
 
   return (
@@ -96,6 +159,7 @@ function CustomersPage() {
                   <th>Email</th>
                   <th>Phone</th>
                   <th>Created At</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
 
@@ -109,6 +173,26 @@ function CustomersPage() {
                       {new Date(
                         customer.created_at
                       ).toLocaleDateString()}
+                    </td>
+
+                    <td>
+                      <div className="customer-actions">
+                        <button
+                          className="edit-button"
+                          onClick={() => setSelectedCustomer(customer)}
+                          title="Edit customer"
+                        >
+                          <Pencil size={16} />
+                        </button>
+
+                        <button
+                          className="delete-button"
+                          onClick={() => handleDeleteCustomer(customer)}
+                          title="Delete customer"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -139,6 +223,34 @@ function CustomersPage() {
             <CustomerForm
               onSubmit={handleCreateCustomer}
               onCancel={() => setShowForm(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Update Customer Modal */}
+      {selectedCustomer && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <div className="modal-header">
+              <div>
+                <h2>Edit Customer</h2>
+                <p>Update the customer's information.</p>
+              </div>
+
+              <button
+                className="close-button"
+                onClick={() => setSelectedCustomer(null)}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <CustomerForm
+              key={selectedCustomer.id}
+              initialData={selectedCustomer}
+              onSubmit={handleUpdateCustomer}
+              onCancel={() => setSelectedCustomer(null)}
             />
           </div>
         </div>
